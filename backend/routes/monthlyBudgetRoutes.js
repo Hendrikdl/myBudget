@@ -1,15 +1,15 @@
-import express from 'express';
-import MonthlyBudget from '../models/MonthlyBudget.js';
-import DebtTemplate from '../models/DebtTemplate.js';
-import { monthIndex, parseISO } from '../utils/dateUtils.js';
-import protect from '../middleware/authMiddleware.js';
+import express from "express";
+import MonthlyBudget from "../models/MonthlyBudget.js";
+import DebtTemplate from "../models/DebtTemplate.js";
+import { monthIndex, parseISO } from "../utils/dateUtils.js";
+import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 /**
  * GET /api/budgets/:year/:month
  */
-router.get('/:year/:month', protect, async (req, res) => {
+router.get("/:year/:month", protect, async (req, res) => {
   const { year, month } = req.params;
 
   let budget = await MonthlyBudget.findOne({
@@ -28,10 +28,10 @@ router.get('/:year/:month', protect, async (req, res) => {
 /**
  * PUT /api/budgets/:id
  */
-router.put('/:id', protect, async (req, res) => {
+router.put("/:id", protect, async (req, res) => {
   const budget = await MonthlyBudget.findById(req.params.id);
 
-  if (!budget) return res.status(404).json({ message: 'Budget not found' });
+  if (!budget) return res.status(404).json({ message: "Budget not found" });
 
   budget.items = req.body.items;
   budget.totalPlanned = budget.items.reduce(

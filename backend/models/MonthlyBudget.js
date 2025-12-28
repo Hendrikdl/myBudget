@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const monthlyItemSchema = new mongoose.Schema({
   templateId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -11,7 +11,11 @@ const monthlyItemSchema = new mongoose.Schema({
 
 const monthlyBudgetSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     year: Number,
     month: Number, // 0–11
 
@@ -23,4 +27,4 @@ const monthlyBudgetSchema = new mongoose.Schema(
 
 monthlyBudgetSchema.index({ userId: 1, year: 1, month: 1 }, { unique: true });
 
-export default mongoose.model('MonthlyBudget', monthlyBudgetSchema);
+export default mongoose.model("MonthlyBudget", monthlyBudgetSchema);

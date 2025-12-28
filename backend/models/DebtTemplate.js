@@ -1,8 +1,12 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const debtTemplateSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     description: String,
     category: String,
@@ -18,4 +22,4 @@ const debtTemplateSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('DebtTemplate', debtTemplateSchema);
+export default mongoose.model("DebtTemplate", debtTemplateSchema);

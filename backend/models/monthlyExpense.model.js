@@ -1,5 +1,4 @@
-// backend/models/monthlyExpense.model.js
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MonthlyExpenseTemplateSchema = new mongoose.Schema(
   {
@@ -17,7 +16,12 @@ const MonthlyExpenseTemplateSchema = new mongoose.Schema(
 
 const MonthlyExpenseSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     month: { type: String, required: true }, // YYYY-MM
     templates: { type: [MonthlyExpenseTemplateSchema], default: [] },
   },
@@ -27,4 +31,4 @@ const MonthlyExpenseSchema = new mongoose.Schema(
 // Ensure one document per user per month
 MonthlyExpenseSchema.index({ user: 1, month: 1 }, { unique: true });
 
-export default mongoose.model('MonthlyExpense', MonthlyExpenseSchema);
+export default mongoose.model("MonthlyExpense", MonthlyExpenseSchema);

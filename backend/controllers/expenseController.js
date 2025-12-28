@@ -1,4 +1,3 @@
-
 import Expense from "../models/Expense.js";
 
 function toUtcDate(ymd) {
@@ -7,7 +6,7 @@ function toUtcDate(ymd) {
 
 async function createExpense(req, res) {
   try {
-    // ✅ requires req.user from middleware
+    // Create expense
     const ownerId = req.user?._id;
     if (!ownerId) return res.status(401).send("Unauthorized");
 
@@ -21,25 +20,36 @@ async function createExpense(req, res) {
       expiryDate = null,
     } = req.body || {};
 
-    if (!description || !description.trim()) return res.status(400).send("Description is required.");
+    if (!description || !description.trim())
+      return res.status(400).send("Description is required.");
     if (!category) return res.status(400).send("Category is required.");
     const amt = Number(amount);
-    if (Number.isNaN(amt) || amt <= 0) return res.status(400).send("Amount must be greater than 0.");
-    if (!firstPaymentDate) return res.status(400).send("First payment date is required.");
+    if (Number.isNaN(amt) || amt <= 0)
+      return res.status(400).send("Amount must be greater than 0.");
+    if (!firstPaymentDate)
+      return res.status(400).send("First payment date is required.");
 
     const first = toUtcDate(firstPaymentDate);
-    if (!(first instanceof Date) || isNaN(first.getTime())) return res.status(400).send("Invalid first payment date.");
+    if (!(first instanceof Date) || isNaN(first.getTime()))
+      return res.status(400).send("Invalid first payment date.");
 
     let expiry = null;
     if (isRecurring && !untilCanceled) {
-      if (!expiryDate) return res.status(400).send("Expiry date is required unless set to 'until canceled'.");
+      if (!expiryDate)
+        return res
+          .status(400)
+          .send("Expiry date is required unless set to 'until canceled'.");
       expiry = toUtcDate(expiryDate);
-      if (!(expiry instanceof Date) || isNaN(expiry.getTime())) return res.status(400).send("Invalid expiry date.");
-      if (expiry < first) return res.status(400).send("Expiry date cannot be before first payment date.");
+      if (!(expiry instanceof Date) || isNaN(expiry.getTime()))
+        return res.status(400).send("Invalid expiry date.");
+      if (expiry < first)
+        return res
+          .status(400)
+          .send("Expiry date cannot be before first payment date.");
     }
 
     const doc = await Expense.create({
-      user: ownerId, // ✅ attach owner
+      user: ownerId,
       description: description.trim(),
       category,
       amount: amt,
@@ -92,17 +102,20 @@ async function updateExpense(req, res) {
 
     if (typeof updates.firstPaymentDate === "string") {
       const d = toUtcDate(updates.firstPaymentDate);
-      if (!(d instanceof Date) || isNaN(d.getTime())) return res.status(400).send("Invalid first payment date.");
+      if (!(d instanceof Date) || isNaN(d.getTime()))
+        return res.status(400).send("Invalid first payment date.");
       updates.firstPaymentDate = d;
     }
     if (typeof updates.expiryDate === "string") {
       const e = toUtcDate(updates.expiryDate);
-      if (!(e instanceof Date) || isNaN(e.getTime())) return res.status(400).send("Invalid expiry date.");
+      if (!(e instanceof Date) || isNaN(e.getTime()))
+        return res.status(400).send("Invalid expiry date.");
       updates.expiryDate = e;
     }
     if (updates.amount !== undefined) {
       const amt = Number(updates.amount);
-      if (Number.isNaN(amt) || amt <= 0) return res.status(400).send("Amount must be greater than 0.");
+      if (Number.isNaN(amt) || amt <= 0)
+        return res.status(400).send("Amount must be greater than 0.");
       updates.amount = amt;
     }
     if (
@@ -112,11 +125,13 @@ async function updateExpense(req, res) {
       updates.firstPaymentDate instanceof Date &&
       updates.expiryDate < updates.firstPaymentDate
     ) {
-      return res.status(400).send("Expiry date cannot be before first payment date.");
+      return res
+        .status(400)
+        .send("Expiry date cannot be before first payment date.");
     }
 
     const item = await Expense.findOneAndUpdate(
-      { _id: req.params.id, user: ownerId }, // ✅ restrict to owner
+      { _id: req.params.id, user: ownerId },
       updates,
       { new: true, runValidators: true }
     );
@@ -134,7 +149,10 @@ async function deleteExpense(req, res) {
     const ownerId = req.user?._id;
     if (!ownerId) return res.status(401).send("Unauthorized");
 
-    const item = await Expense.findOneAndDelete({ _id: req.params.id, user: ownerId });
+    const item = await Expense.findOneAndDelete({
+      _id: req.params.id,
+      user: ownerId,
+    });
     if (!item) return res.status(404).send("Expense not found.");
     return res.status(204).send();
   } catch (err) {

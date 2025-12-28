@@ -1,16 +1,16 @@
-// backend/controllers/monthlyExpenseController.js
-import MonthlyExpense from '../models/monthlyExpense.model.js';
-import Settings from '../models/Settings.js';
+import MonthlyExpense from "../models/monthlyExpense.model.js";
+import Settings from "../models/Settings.js";
 
 // Helper to normalize date
 function getMonthYYYYMM(value) {
   if (!value) return null;
-  if (typeof value === 'string' && /^\d{4}-\d{2}$/.test(value)) return value;
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value.slice(0, 7);
+  if (typeof value === "string" && /^\d{4}-\d{2}$/.test(value)) return value;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value))
+    return value.slice(0, 7);
   const d = new Date(value);
   if (isNaN(d)) return null;
   const year = d.getFullYear();
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
   return `${year}-${month}`;
 }
 
@@ -37,24 +37,31 @@ export const getExistingMonthlyExpenses = async (req, res) => {
 
   const monthly = await MonthlyExpense.findOne({ user: userId, month });
 
-  if (!monthly) return res.status(404).json({ message: 'Month not found' });
+  if (!monthly) return res.status(404).json({ message: "Month not found" });
 
   const totals = {
-    total: monthly.templates.reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
-    recurring: monthly.templates.filter(t => t.isRecurring).reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
-    onceOff: monthly.templates.filter(t => !t.isRecurring).reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
+    total: monthly.templates.reduce(
+      (sum, t) => sum + Number(t.amountOverride ?? t.amount),
+      0
+    ),
+    recurring: monthly.templates
+      .filter((t) => t.isRecurring)
+      .reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
+    onceOff: monthly.templates
+      .filter((t) => !t.isRecurring)
+      .reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
   };
 
   res.json({ items: monthly.templates, totals });
 };
-
 
 // GET monthly expenses
 export const getMonthlyExpenses = async (req, res) => {
   const userId = req.user?._id || req.user?.id;
   const month = req.params.month;
 
-  if (!month || !/^\d{4}-\d{2}$/.test(month)) return res.status(400).json({ message: 'Invalid month format' });
+  if (!month || !/^\d{4}-\d{2}$/.test(month))
+    return res.status(400).json({ message: "Invalid month format" });
 
   try {
     // Fetch or create MonthlyExpense document
@@ -63,12 +70,14 @@ export const getMonthlyExpenses = async (req, res) => {
     if (!monthly) {
       // Get user templates
       const settings = await Settings.findOne({ userId });
-      const templates = (settings?.debtTemplates || []).filter(t => isTemplateApplicable(t, month));
+      const templates = (settings?.debtTemplates || []).filter((t) =>
+        isTemplateApplicable(t, month)
+      );
 
       monthly = await MonthlyExpense.create({
         user: userId,
         month,
-        templates: templates.map(t => ({
+        templates: templates.map((t) => ({
           templateId: t._id,
           description: t.description,
           category: t.category,
@@ -76,23 +85,29 @@ export const getMonthlyExpenses = async (req, res) => {
           isRecurring: t.isRecurring,
           firstPaymentDate: t.firstPaymentDate,
           expiryDate: t.expiryDate,
-          included: true
-        }))
+          included: true,
+        })),
       });
     }
 
     // Totals
     const totals = {
-      total: monthly.templates.reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
-      recurring: monthly.templates.filter(t => t.isRecurring).reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
-      onceOff: monthly.templates.filter(t => !t.isRecurring).reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0)
+      total: monthly.templates.reduce(
+        (sum, t) => sum + Number(t.amountOverride ?? t.amount),
+        0
+      ),
+      recurring: monthly.templates
+        .filter((t) => t.isRecurring)
+        .reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
+      onceOff: monthly.templates
+        .filter((t) => !t.isRecurring)
+        .reduce((sum, t) => sum + Number(t.amountOverride ?? t.amount), 0),
     };
 
     res.json({ items: monthly.templates, totals });
-
   } catch (err) {
-    console.error('MonthlyExpense GET error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("MonthlyExpense GET error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -103,17 +118,20 @@ export const updateMonthlyExpense = async (req, res) => {
   const updateData = req.body;
 
   try {
-    const monthly = await MonthlyExpense.findOne({ 'templates._id': templateId, user: userId });
-    if (!monthly) return res.status(404).json({ message: 'Template not found' });
+    const monthly = await MonthlyExpense.findOne({
+      "templates._id": templateId,
+      user: userId,
+    });
+    if (!monthly)
+      return res.status(404).json({ message: "Template not found" });
 
     const template = monthly.templates.id(templateId);
     Object.assign(template, updateData);
     await monthly.save();
     res.json(template);
-
   } catch (err) {
-    console.error('PATCH error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("PATCH error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -122,16 +140,25 @@ export const copyPreviousMonth = async (req, res) => {
   const userId = req.user?._id || req.user?.id;
   const { fromMonth, toMonth } = req.body;
 
-  if (!fromMonth || !toMonth) return res.status(400).json({ message: 'fromMonth and toMonth required' });
+  if (!fromMonth || !toMonth)
+    return res.status(400).json({ message: "fromMonth and toMonth required" });
 
   try {
-    const prev = await MonthlyExpense.findOne({ user: userId, month: fromMonth });
-    if (!prev) return res.status(404).json({ message: 'Previous month not found' });
+    const prev = await MonthlyExpense.findOne({
+      user: userId,
+      month: fromMonth,
+    });
+    if (!prev)
+      return res.status(404).json({ message: "Previous month not found" });
 
-    const exists = await MonthlyExpense.findOne({ user: userId, month: toMonth });
-    if (exists) return res.status(400).json({ message: 'Target month already exists' });
+    const exists = await MonthlyExpense.findOne({
+      user: userId,
+      month: toMonth,
+    });
+    if (exists)
+      return res.status(400).json({ message: "Target month already exists" });
 
-    const templates = prev.templates.map(t => ({
+    const templates = prev.templates.map((t) => ({
       templateId: t.templateId,
       description: t.description,
       category: t.category,
@@ -140,14 +167,17 @@ export const copyPreviousMonth = async (req, res) => {
       included: t.included,
       isRecurring: t.isRecurring,
       firstPaymentDate: t.firstPaymentDate,
-      expiryDate: t.expiryDate
+      expiryDate: t.expiryDate,
     }));
 
-    const monthly = await MonthlyExpense.create({ user: userId, month: toMonth, templates });
+    const monthly = await MonthlyExpense.create({
+      user: userId,
+      month: toMonth,
+      templates,
+    });
     res.json({ success: true, toMonth, items: monthly.templates });
-
   } catch (err) {
-    console.error('COPY previous month error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("COPY previous month error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
