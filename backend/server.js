@@ -15,9 +15,24 @@ const app = express();
 /* =========================
    MIDDLEWARE
    ========================= */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://my-personal-budget.onrender.com",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow server-to-server & tools like Postman
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
